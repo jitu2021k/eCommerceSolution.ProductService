@@ -4,6 +4,7 @@ using eCommerce.BusinessLogicLayer.ServiceContracts;
 using eCommerce.DataAccessLayer.Entities;
 using eCommerce.DataAccessLayer.RepositoryContracts;
 using eCommerce.ProductsService.BusinessLogicLayer.RabbitMQ;
+using eCommerce.ProductsService.usinessLogicLayer.RabbitMQ;
 using FluentValidation;
 using FluentValidation.Results;
 using System.Linq.Expressions;
@@ -71,6 +72,19 @@ namespace eCommerce.BusinessLogicLayer.Services
 
             //Attempt to delete 
             bool isDeleted = await _productsRepository.DeleteProduct(productId);
+
+
+            //To add a code to posting a message to the message queue that announces the
+            //consumers about the deletion of product details
+           
+            if (isDeleted)
+            {
+                string routingKey = "product.delete";
+                var message = new ProductDeletionMessage(existingProduct.ProductID,
+                                                            existingProduct.ProductName);
+                _rabbitMQPublisher.Publish<ProductDeletionMessage>(routingKey, message);
+            }
+
             return isDeleted;
         }
 
