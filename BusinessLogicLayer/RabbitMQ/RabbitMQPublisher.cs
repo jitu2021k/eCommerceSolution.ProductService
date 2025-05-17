@@ -30,7 +30,7 @@ namespace eCommerce.ProductsService.BusinessLogicLayer.RabbitMQ
             _channel = _connection.CreateModel();
         }
 
-        public void Publish<T>(string routingKey, T message)
+        public void Publish<T>(Dictionary<string,object> headers, T message)
         {
             string messageJson = JsonSerializer.Serialize(message);
             byte[] messgaeBodyInBytes = Encoding.UTF8.GetBytes(messageJson);
@@ -38,13 +38,20 @@ namespace eCommerce.ProductsService.BusinessLogicLayer.RabbitMQ
             //Create exchange
             string exchangeName = _configuration["RabbitMQ_Products_Exchange"]!;
             _channel.ExchangeDeclare(exchangeName,
-                                type: ExchangeType.Direct,
+                                type: ExchangeType.Headers,
                                 durable: true);
 
+            // For Header use Dictionary<string,object> in the place of routingKey
+            // and pass basicProperties in below var basicProperties = _channel.CreateBasicProperties();
+            //Pass routingKey as string.Empty 
+
             //Publish Message
+            var basicProperties = _channel.CreateBasicProperties();
+            basicProperties.Headers = headers;
+
             _channel.BasicPublish(exchange: exchangeName,
-                                routingKey: routingKey,
-                                basicProperties: null,
+                                routingKey: string.Empty,
+                                basicProperties: basicProperties,
                                 body: messgaeBodyInBytes);
         }
         public void Dispose()

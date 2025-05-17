@@ -79,10 +79,18 @@ namespace eCommerce.BusinessLogicLayer.Services
            
             if (isDeleted)
             {
-                string routingKey = "product.delete";
+                //string routingKey = "product.delete";
+
+
                 var message = new ProductDeletionMessage(existingProduct.ProductID,
                                                             existingProduct.ProductName);
-                _rabbitMQPublisher.Publish<ProductDeletionMessage>(routingKey, message);
+
+                var headers = new Dictionary<string, object>()
+                {
+                    { "event","product.delete" },
+                    { "RowCount",1 }
+                };
+                _rabbitMQPublisher.Publish<ProductDeletionMessage>(headers, message);
             }
 
             return isDeleted;
@@ -143,10 +151,18 @@ namespace eCommerce.BusinessLogicLayer.Services
 
             if (isProductNameChanged)
             {
-                string routingKey = "product.update.name";
+                //string routingKey = "product.update.name";
                 var message = new ProductNameUpdateMessage(productUpdateRequest.ProductID,
                                                             productUpdateRequest.ProductName);
-                _rabbitMQPublisher.Publish<ProductNameUpdateMessage>(routingKey, message);
+
+                var headers = new Dictionary<string, object>()
+                {
+                    { "event","product.update" },
+                    { "field", "name" },
+                    { "RowCount",1 }
+                };
+
+                _rabbitMQPublisher.Publish<ProductNameUpdateMessage>(headers, message);
             }
 
             ProductResponse? productResponse = _mapper.Map<ProductResponse>(updatedProduct);
